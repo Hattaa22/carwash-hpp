@@ -1,258 +1,151 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard - Sistem HPP Car Wash')
+@section('title', 'Dashboard Analytics - Sistem HPP Car Wash')
 
 @section('content')
-<div class="px-4 sm:px-0">
+<div class="space-y-4 max-w-7xl mx-auto">
     <!-- Header -->
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p class="text-gray-600 mt-2">Analisis HPP dan performa layanan car wash</p>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Analisis HPP, margin profit, dan performa layanan car wash & treatment</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="exportToExcel()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs rounded-lg shadow-xs transition">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                Export Data
+            </button>
+            <a href="{{ route('hpp.index') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs rounded-lg shadow-xs transition">
+                <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+                Hitung HPP Baru
+            </a>
+        </div>
     </div>
 
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white overflow-hidden shadow-lg rounded-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300">
-            <div class="p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="ml-4 flex-1">
-                        <dt class="text-sm font-medium text-gray-500">Total HPP Entries</dt>
-                        <dd class="text-2xl font-bold text-gray-900">{{ $totalEntries ?? 0 }}</dd>
-                    </div>
-                </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+            <div class="p-2.5 bg-slate-100 text-slate-700 rounded-lg">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total HPP Entries</p>
+                <h3 class="text-lg font-bold text-slate-900 mt-0.5">{{ $statistics['total_results'] ?? $results->total() }}</h3>
             </div>
         </div>
 
-        <div class="bg-white overflow-hidden shadow-lg rounded-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300">
-            <div class="p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="ml-4 flex-1">
-                        <dt class="text-sm font-medium text-gray-500">Rata-rata HPP</dt>
-                        <dd class="text-2xl font-bold text-gray-900">Rp {{ number_format($avgHpp ?? 0, 0, ',', '.') }}</dd>
-                    </div>
-                </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+            <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+                <i data-lucide="badge-dollar-sign" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Rata-rata HPP</p>
+                <h3 class="text-lg font-bold text-slate-900 mt-0.5">Rp {{ number_format($statistics['avg_hpp'] ?? 0, 0, ',', '.') }}</h3>
             </div>
         </div>
 
-        <div class="bg-white overflow-hidden shadow-lg rounded-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300">
-            <div class="p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="ml-4 flex-1">
-                        <dt class="text-sm font-medium text-gray-500">Margin Tertinggi</dt>
-                        <dd class="text-2xl font-bold text-gray-900">{{ number_format($maxMargin ?? 0, 1) }}%</dd>
-                    </div>
-                </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+            <div class="p-2.5 bg-slate-100 text-slate-700 rounded-lg">
+                <i data-lucide="trending-up" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Margin Avg Member</p>
+                <h3 class="text-lg font-bold text-slate-900 mt-0.5">{{ number_format($statistics['avg_margin_member'] ?? 0, 1) }}%</h3>
             </div>
         </div>
 
-        <div class="bg-white overflow-hidden shadow-lg rounded-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300">
-            <div class="p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0V6a2 2 0 012-2h4a2 2 0 012 2v1M8 7l8 8m0-8v8a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h8a2 2 0 012 2z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="ml-4 flex-1">
-                        <dt class="text-sm font-medium text-gray-500">Layanan Terpopuler</dt>
-                        <dd class="text-lg font-bold text-gray-900">{{ $popularService ?? '-' }}</dd>
-                    </div>
-                </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+            <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">HPP Maksimal</p>
+                <h3 class="text-lg font-bold text-slate-900 mt-0.5">Rp {{ number_format($statistics['max_hpp'] ?? 0, 0, ',', '.') }}</h3>
             </div>
         </div>
     </div>
 
     <!-- Charts Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <!-- HPP vs Margin Chart -->
-        <div class="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">HPP vs Margin Analysis</h3>
-            <div class="h-64">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+            <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-600"></i> Analisis HPP vs Margin
+            </h3>
+            <div class="h-52">
                 <canvas id="hppMarginChart"></canvas>
             </div>
         </div>
 
-        <!-- Vehicle Type Distribution -->
-        <div class="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Distribusi Jenis Kendaraan</h3>
-            <div class="h-64">
+        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+            <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <i data-lucide="pie-chart" class="w-4 h-4 text-blue-600"></i> Distribusi Jenis Kendaraan
+            </h3>
+            <div class="h-52">
                 <canvas id="vehicleTypeChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Filters -->
-    <div class="bg-white p-6 rounded-lg shadow-lg border border-gray-200 mb-8">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Filter Data</h3>
-        <form method="GET" action="{{ route('dashboard') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4" x-data="{ loading: false }" @submit="loading = true">
-            <div>
-                <label for="date_from" class="block text-sm font-medium text-gray-700">Dari Tanggal</label>
-                <input type="date" id="date_from" name="date_from" value="{{ request('date_from') }}" 
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            </div>
-            <div>
-                <label for="date_to" class="block text-sm font-medium text-gray-700">Sampai Tanggal</label>
-                <input type="date" id="date_to" name="date_to" value="{{ request('date_to') }}" 
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            </div>
-            <div>
-                <label for="jenis_kendaraan" class="block text-sm font-medium text-gray-700">Jenis Kendaraan</label>
-                <select id="jenis_kendaraan" name="jenis_kendaraan" 
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    <option value="">Semua</option>
-                    <option value="S" {{ request('jenis_kendaraan') == 'S' ? 'selected' : '' }}>S</option>
-                    <option value="M" {{ request('jenis_kendaraan') == 'M' ? 'selected' : '' }}>M</option>
-                    <option value="L" {{ request('jenis_kendaraan') == 'L' ? 'selected' : '' }}>L</option>
-                    <option value="XL" {{ request('jenis_kendaraan') == 'XL' ? 'selected' : '' }}>XL</option>
-                    <option value="Sport & Luxury" {{ request('jenis_kendaraan') == 'Sport & Luxury' ? 'selected' : '' }}>Sport & Luxury</option>
-                </select>
-            </div>
-            <div class="flex items-end">
-                <button type="submit" 
-                        class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
-                        :class="{ 'opacity-50 cursor-not-allowed': loading }"
-                        :disabled="loading">
-                    <span x-show="!loading">Filter Data</span>
-                    <span x-show="loading" class="flex items-center justify-center">
-                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Loading...
-                    </span>
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Recent Data Table -->
-    <div class="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Data HPP Terbaru</h3>
+    <!-- Table Container -->
+    <div class="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
+        <div class="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+            <h3 class="font-bold text-slate-900 text-xs flex items-center gap-2">
+                <i data-lucide="list" class="w-3.5 h-3.5 text-blue-600"></i> Histori Kalkulasi HPP Terbaru
+            </h3>
         </div>
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Layanan</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kendaraan</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HPP</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margin Member</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margin Non-Member</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        <th class="px-4 py-3">Tanggal</th>
+                        <th class="px-4 py-3">Layanan</th>
+                        <th class="px-4 py-3">Kendaraan</th>
+                        <th class="px-4 py-3">Nilai HPP</th>
+                        <th class="px-4 py-3">Margin Member</th>
+                        <th class="px-4 py-3">Margin Non-Member</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($recentData ?? [] as $data)
-                    <tr class="hover:bg-gray-50 transition-colors duration-150">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ \Carbon\Carbon::parse($created_at ?? now())->format('d/m/Y H:i') }}
+                <tbody class="divide-y divide-slate-200 bg-white">
+                    @forelse($results ?? [] as $data)
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="px-4 py-3 font-medium text-slate-900">
+                            {{ \Carbon\Carbon::parse($data->created_at)->format('d/m/Y H:i') }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">{{ $data->layanan_hpp ?? '-' }}</div>
-                            <div class="text-sm text-gray-500">{{ $data->kategori_pendapatan ?? '-' }}</div>
+                        <td class="px-4 py-3">
+                            <div class="font-semibold text-slate-900 text-xs">{{ $data->layanan_hpp }}</div>
+                            <div class="text-[10px] text-slate-400">{{ $data->sumber_pendapatan }} - {{ $data->kategori_pendapatan }}</div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $data->jenis_kendaraan ?? '-' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rp {{ number_format($data->hpp ?? 0, 0, ',', '.') }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                @if(($data->margin_member ?? 0) > 50) bg-green-100 text-green-800 
-                                @elseif(($data->margin_member ?? 0) > 30) bg-yellow-100 text-yellow-800 
-                                @else bg-red-100 text-red-800 @endif">
-                                {{ number_format($data->margin_member ?? 0, 1) }}%
+                        <td class="px-4 py-3 font-medium text-slate-800">{{ $data->jenis_kendaraan }}</td>
+                        <td class="px-4 py-3 font-semibold text-blue-600">Rp {{ number_format($data->hpp, 0, ',', '.') }}</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Rp {{ number_format($data->margin_member, 0, ',', '.') }} ({{ number_format($data->persen_hpp_member, 1) }}%)
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                @if(($data->margin_non_member ?? 0) > 50) bg-green-100 text-green-800 
-                                @elseif(($data->margin_non_member ?? 0) > 30) bg-yellow-100 text-yellow-800 
-                                @else bg-red-100 text-red-800 @endif">
-                                {{ number_format($data->margin_non_member ?? 0, 1) }}%
+                        <td class="px-4 py-3">
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                Rp {{ number_format($data->margin_non_member, 0, ',', '.') }} ({{ number_format($data->persen_hpp_non_member, 1) }}%)
                             </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <a href="#" class="text-indigo-600 hover:text-indigo-900 mr-3">Detail</a>
-                            <a href="#" class="text-red-600 hover:text-red-900">Hapus</a>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
-                            <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            <p class="text-lg font-medium">Belum ada data HPP</p>
-                            <p class="text-sm">Mulai dengan <a href="{{ route('hpp.index') }}" class="text-indigo-600 hover:text-indigo-900">menghitung HPP pertama</a></p>
+                        <td colspan="6" class="px-4 py-8 text-center text-slate-400">
+                            <i data-lucide="calculator" class="w-7 h-7 mx-auto mb-2 text-slate-300"></i>
+                            <p class="text-xs font-medium">Belum ada data kalkulasi HPP.</p>
+                            <a href="{{ route('hpp.index') }}" class="text-[11px] text-blue-600 hover:underline mt-1 inline-block">Mulai hitung HPP pertama</a>
                         </td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        
-        @if(isset($recentData) && $recentData->hasPages())
-        <div class="px-6 py-4 border-t border-gray-200">
-            {{ $recentData->links() }}
+        @if(isset($results) && $results->hasPages())
+        <div class="px-4 py-3 border-t border-slate-200">
+            {{ $results->links() }}
         </div>
         @endif
     </div>
-
-    <!-- Quick Actions -->
-    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <a href="{{ route('hpp.index') }}" class="group relative block p-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg text-white hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div class="flex items-center">
-                <svg class="w-8 h-8 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-                <div>
-                    <h3 class="text-lg font-semibold">Hitung HPP Baru</h3>
-                    <p class="text-blue-100">Tambah perhitungan HPP</p>
-                </div>
-            </div>
-        </a>
-
-        <a href="{{ route('admin.components') }}" class="group relative block p-6 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg shadow-lg text-white hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div class="flex items-center">
-                <svg class="w-8 h-8 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-                <div>
-                    <h3 class="text-lg font-semibold">Kelola Master Data</h3>
-                    <p class="text-purple-100">Admin panel</p>
-                </div>
-            </div>
-        </a>
-
-        <div class="group relative block p-6 bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow-lg text-white hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer" onclick="exportToExcel()">
-            <div class="flex items-center">
-                <svg class="w-8 h-8 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
                 <div>
                     <h3 class="text-lg font-semibold">Export Data</h3>
                     <p class="text-green-100">Download ke Excel</p>
@@ -282,14 +175,14 @@ new Chart(hppMarginCtx, {
     data: {
         datasets: [{
             label: 'Member',
-            data: JSON.parse('@json($chartData['hppMargin']['member'] ?? [])'),
-            backgroundColor: 'rgba(59, 130, 246, 0.6)',
-            borderColor: 'rgba(59, 130, 246, 1)',
+            data: @json($chartData['hppMargin']['member'] ?? []),
+            backgroundColor: 'rgba(37, 99, 235, 0.7)',
+            borderColor: 'rgba(37, 99, 235, 1)',
         }, {
             label: 'Non-Member',
             data: @json($chartData['hppMargin']['nonMember'] ?? []),
-            backgroundColor: 'rgba(239, 68, 68, 0.6)',
-            borderColor: 'rgba(239, 68, 68, 1)',
+            backgroundColor: 'rgba(15, 23, 42, 0.7)',
+            borderColor: 'rgba(15, 23, 42, 1)',
         }]
     },
     options: {
@@ -322,20 +215,20 @@ new Chart(vehicleTypeCtx, {
         datasets: [{
             data: @json(array_values($chartData['vehicleDistribution'] ?? [])),
             backgroundColor: [
-                'rgba(59, 130, 246, 0.8)',
-                'rgba(16, 185, 129, 0.8)',
-                'rgba(245, 158, 11, 0.8)',
-                'rgba(239, 68, 68, 0.8)',
-                'rgba(139, 92, 246, 0.8)'
+                'rgba(37, 99, 235, 0.85)',
+                'rgba(15, 23, 42, 0.85)',
+                'rgba(59, 130, 246, 0.65)',
+                'rgba(51, 65, 85, 0.65)',
+                'rgba(148, 163, 184, 0.65)'
             ],
             borderColor: [
-                'rgba(59, 130, 246, 1)',
-                'rgba(16, 185, 129, 1)',
-                'rgba(245, 158, 11, 1)',
-                'rgba(239, 68, 68, 1)',
-                'rgba(139, 92, 246, 1)'
+                '#2563eb',
+                '#0f172a',
+                '#3b82f6',
+                '#334155',
+                '#94a3b8'
             ],
-            borderWidth: 2
+            borderWidth: 1.5
         }]
     },
     options: chartConfig

@@ -37,34 +37,56 @@ class ComponentController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:components',
-            'purchase_price' => 'required|numeric|min:0',
-            'quantity' => 'required|numeric|min:0',
-            'unit' => 'required|string|max:50',
-            'category' => 'nullable|string|max:100'
+        $harga = $request->harga ?? $request->purchase_price ?? 0;
+        $qty = $request->qty ?? $request->quantity ?? 0;
+        $satuan = $request->satuan ?? $request->unit ?? 'ml';
+        $kategori = $request->kategori ?? $request->category ?? 'Car Wash';
+
+        $validator = Validator::make([
+            'name' => $request->name,
+            'harga' => $harga,
+            'qty' => $qty,
+            'satuan' => $satuan,
+            'kategori' => $kategori
+        ], [
+            'name' => 'required|string|max:255|unique:components,name',
+            'harga' => 'required|numeric|min:0',
+            'qty' => 'required|numeric|min:0',
+            'satuan' => 'required|string|max:50',
+            'kategori' => 'nullable|string|max:100'
         ]);
 
         if ($validator->fails()) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal: ' . implode(', ', $validator->errors()->all())
+                ], 422);
+            }
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput();
         }
 
-        $harga = $request->harga ?? $request->purchase_price ?? 0;
-        $qty = $request->qty ?? $request->quantity ?? 0;
-        $satuan = $request->satuan ?? $request->unit ?? 'ml';
         $hargaPerMl = $qty > 0 ? $harga / $qty : 0;
 
-        Component::create([
+        $component = Component::create([
             'name' => $request->name,
             'harga' => $harga,
             'qty' => $qty,
             'satuan' => $satuan,
             'harga_per_ml' => $hargaPerMl,
             'harga_per_satuan' => $hargaPerMl,
-            'kategori' => $request->kategori ?? $request->category
+            'kategori' => $kategori
         ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Komponen berhasil ditambahkan',
+                'data' => $component
+            ]);
+        }
 
         return redirect()->route('admin.components')
             ->with('success', 'Komponen berhasil ditambahkan');

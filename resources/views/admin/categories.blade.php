@@ -7,17 +7,15 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-8">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Kelola Kategori Layanan</h1>
-                    <p class="mt-2 text-sm text-gray-600">Manage categories and services for car wash and treatment</p>
+                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Kategori & Layanan</h1>
+                    <p class="text-sm text-slate-500 mt-1">Kelola sumber pendapatan, kategori pendapatan, dan pemetaan komponen HPP</p>
                 </div>
-                <div class="mt-4 sm:mt-0">
+                <div>
                     <button type="button" onclick="openModal('addCategoryModal')" 
-                            class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                        </svg>
+                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg shadow-sm transition">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
                         Tambah Kategori
                     </button>
                 </div>

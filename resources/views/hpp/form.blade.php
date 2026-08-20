@@ -19,28 +19,16 @@
                 <!-- Left Column -->
                 <div class="space-y-6">
                     
-                    <!-- STEP 3: Sumber Pendapatan dengan Multiple Fallbacks -->
+                    <!-- STEP 3: Sumber Pendapatan -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Sumber Pendapatan</label>
-                        
-                        <!-- Method 1: Alpine Template (Primary) -->
                         <select x-model="form.sumber_pendapatan" @change="onSumberChange" 
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">Pilih Sumber Pendapatan</option>
-                            
-                            <!-- Alpine Template Options -->
                             <template x-for="(sumber, index) in availableSumberPendapatan" :key="'sumber-' + index">
                                 <option :value="sumber" x-text="sumber"></option>
                             </template>
-                            
-                            <!-- FALLBACK: Blade Static Options (jika Alpine gagal) -->
-                            @if(!empty($sumberPendapatanList))
-                                @foreach($sumberPendapatanList as $sumber)
-                                    <option value="{{ $sumber }}">{{ $sumber }}</option>
-                                @endforeach
-                            @endif
                         </select>
-                        
                     </div>
 
                     <!-- STEP 4: Rest of the form dengan error handling -->
@@ -85,11 +73,6 @@
                             <template x-for="vehicle in vehicles" :key="'vehicle-' + vehicle.id">
                                 <option :value="vehicle.jenis_kendaraan" x-text="vehicle.jenis_kendaraan"></option>
                             </template>
-                            @foreach($vehicles as $vehicle)
-                                            <option value="{{ $vehicle->jenis_kendaraan }}">
-                                                {{ $vehicle->jenis_kendaraan }} 
-                                            </option>
-                            @endforeach
                         </select>
                         <div x-show="!loading.vehicles && vehicles.length > 0" class="text-xs text-gray-400 mt-1" 
                              x-text="'Tersedia: ' + vehicles.length + ' jenis kendaraan'"></div>
