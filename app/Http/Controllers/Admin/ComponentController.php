@@ -15,7 +15,13 @@ class ComponentController extends Controller
     public function index()
     {
         $components = Component::orderBy('name')->paginate(15);
-        return view('admin.components', compact('components'));
+        $categories = \App\Models\ServiceCategory::select('kategori_pendapatan', 'sumber_pendapatan')
+            ->whereNotNull('kategori_pendapatan')
+            ->distinct()
+            ->orderBy('kategori_pendapatan')
+            ->get();
+
+        return view('admin.components', compact('components', 'categories'));
     }
 
     /**

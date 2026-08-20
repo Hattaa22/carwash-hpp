@@ -10,8 +10,10 @@ class ComponentSeeder extends Seeder
     public function run()
     {
         $components = [
+            // Car Wash Components
             [
                 'name' => 'Touchless',
+                'kategori' => 'Car Wash',
                 'harga' => 1750000,
                 'qty' => 20000,
                 'satuan' => 'ml',
@@ -20,6 +22,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'Jamur Kaca',
+                'kategori' => 'Car Wash',
                 'harga' => 400000,
                 'qty' => 5000,
                 'satuan' => 'ml',
@@ -28,6 +31,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'WS',
+                'kategori' => 'Car Wash',
                 'harga' => 800000,
                 'qty' => 10000,
                 'satuan' => 'ml',
@@ -36,6 +40,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'ALX',
+                'kategori' => 'Car Wash',
                 'harga' => 950000,
                 'qty' => 10000,
                 'satuan' => 'ml',
@@ -44,6 +49,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'QS',
+                'kategori' => 'Car Wash',
                 'harga' => 450000,
                 'qty' => 5000,
                 'satuan' => 'ml',
@@ -52,6 +58,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'APC',
+                'kategori' => 'Car Wash',
                 'harga' => 600000,
                 'qty' => 10000,
                 'satuan' => 'ml',
@@ -60,14 +67,18 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'Super shine',
+                'kategori' => 'Car Wash',
                 'harga' => 750000,
                 'qty' => 10000,
                 'satuan' => 'ml',
                 'harga_per_ml' => 75,
                 'harga_per_satuan' => 75
             ],
+
+            // Treatment Components
             [
                 'name' => 'Degreaser',
+                'kategori' => 'Treatment',
                 'harga' => 1200000,
                 'qty' => 15000,
                 'satuan' => 'ml',
@@ -76,6 +87,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'CWM',
+                'kategori' => 'Treatment',
                 'harga' => 650000,
                 'qty' => 8000,
                 'satuan' => 'ml',
@@ -84,6 +96,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'Backing pleate 3\'',
+                'kategori' => 'Treatment',
                 'harga' => 350000,
                 'qty' => 100,
                 'satuan' => 'pcs',
@@ -92,6 +105,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'Backing pleate 6\'',
+                'kategori' => 'Treatment',
                 'harga' => 450000,
                 'qty' => 100,
                 'satuan' => 'pcs',
@@ -100,6 +114,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'Lake country',
+                'kategori' => 'Treatment',
                 'harga' => 200000,
                 'qty' => 50,
                 'satuan' => 'pcs',
@@ -108,6 +123,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'Abralon 5\'',
+                'kategori' => 'Treatment',
                 'harga' => 150000,
                 'qty' => 50,
                 'satuan' => 'pcs',
@@ -116,6 +132,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'E3 Pollar shine',
+                'kategori' => 'Treatment',
                 'harga' => 800000,
                 'qty' => 5000,
                 'satuan' => 'ml',
@@ -124,6 +141,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'Obat Coating kaca',
+                'kategori' => 'Treatment',
                 'harga' => 1500000,
                 'qty' => 1000,
                 'satuan' => 'ml',
@@ -132,6 +150,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'Microfiber 320 gsm',
+                'kategori' => 'Treatment',
                 'harga' => 250000,
                 'qty' => 100,
                 'satuan' => 'pcs',
@@ -140,6 +159,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'Clay',
+                'kategori' => 'Treatment',
                 'harga' => 300000,
                 'qty' => 2000,
                 'satuan' => 'gram',
@@ -148,6 +168,7 @@ class ComponentSeeder extends Seeder
             ],
             [
                 'name' => 'Obat Coating Velg',
+                'kategori' => 'Treatment',
                 'harga' => 1200000,
                 'qty' => 1000,
                 'satuan' => 'ml',
@@ -157,7 +178,7 @@ class ComponentSeeder extends Seeder
         ];
 
         foreach ($components as $component) {
-            Component::create($component);
+            Component::updateOrCreate(['name' => $component['name']], $component);
         }
     }
 }

@@ -25,10 +25,16 @@ class ServiceCategory extends Model
         'component_id' => 'integer'
     ];
 
-    // CORRECTED: Relationship ke Component
+    // Relationship ke Component via pivot layanan_komponen
     public function component()
     {
         return $this->belongsTo(Component::class, 'component_id', 'id');
+    }
+
+    public function komponens()
+    {
+        return $this->belongsToMany(Component::class, 'layanan_komponen', 'service_category_id', 'component_id')
+                    ->withPivot('jumlah_pemakaian', 'subtotal_biaya');
     }
     
     // Scope untuk filter berdasarkan sumber pendapatan

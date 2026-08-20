@@ -3,7 +3,7 @@
 @section('title', 'Input HPP - Car Wash System')
 
 @section('content')
-<div class="bg-white rounded-lg shadow-lg p-6">
+<div class="bg-white rounded-lg shadow-lg p-6" x-data="hppCalculator()">
 
         <!-- Header -->
         <div class="mb-8">
@@ -54,15 +54,10 @@
                             <template x-for="(kategori, index) in availableKategori" :key="'kategori-' + index">
                                 <option :value="kategori" x-text="kategori"></option>
                             </template>
-                            @foreach($service_categories as $kategori)
-                                            <option value="{{ $kategori->kategori_pendapatan }}">
-                                                {{ $kategori->kategori_pendapatan }} 
-                                            </option>
-                            @endforeach
+                        </select>
                         <div x-show="loading.kategori" class="text-sm text-blue-500 mt-1">Memuat kategori...</div>
                         <div x-show="!loading.kategori && availableKategori.length > 0" class="text-xs text-gray-400 mt-1" 
                              x-text="'Tersedia: ' + availableKategori.length + ' kategori'"></div>
-                        </select>
                     </div>
 
                     <!-- Layanan HPP -->
@@ -75,11 +70,6 @@
                             <template x-for="layanan in availableLayanan" :key="'layanan-' + layanan.id">
                                 <option :value="layanan.layanan_hpp" x-text="layanan.layanan_hpp"></option>
                             </template>
-                            @foreach($service_categories as $layanan)
-                                            <option value="{{ $layanan->layanan_hpp }}">
-                                                {{ $layanan->layanan_hpp }} 
-                                            </option>
-                            @endforeach
                         </select>
                         <div x-show="loading.layanan" class="text-sm text-blue-500 mt-1">Memuat layanan...</div>
                         <div x-show="!loading.layanan && availableLayanan.length > 0" class="text-xs text-gray-400 mt-1" 
@@ -264,7 +254,7 @@
 
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
 function hppCalculator() {
     return {
@@ -370,7 +360,7 @@ function hppCalculator() {
             }
         },
         
-        // STEP 8: Enhanced event handlers dengan better error handling
+        // STEP 8: Enhanced event handlers dengan auto-select bertahap
         async onSumberChange() {
             console.log('🔄 Sumber pendapatan changed to:', this.form.sumber_pendapatan);
             
@@ -385,6 +375,11 @@ function hppCalculator() {
             
             if (this.form.sumber_pendapatan) {
                 await this.loadKategoriBySource();
+                // Auto-select kategori pertama jika tersedia
+                if (this.availableKategori.length > 0) {
+                    this.form.kategori_pendapatan = this.availableKategori[0];
+                    await this.onKategoriChange();
+                }
             }
         },
         
@@ -405,8 +400,8 @@ function hppCalculator() {
                 });
                 
                 if (response.ok) {
-                    const data = await response.json();
-                    this.availableKategori = Array.isArray(data) ? data : [];
+                    const res = await response.json();
+                    this.availableKategori = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
                     console.log('✅ Kategori loaded:', this.availableKategori);
                 } else {
                     const errorText = await response.text();
@@ -435,6 +430,11 @@ function hppCalculator() {
             
             if (this.form.kategori_pendapatan) {
                 await this.loadLayananByKategori();
+                // Auto-select layanan komponen pertama jika tersedia
+                if (this.availableLayanan.length > 0) {
+                    this.form.layanan_hpp = this.availableLayanan[0].layanan_hpp;
+                    await this.onLayananChange();
+                }
             }
         },
         
@@ -456,8 +456,8 @@ function hppCalculator() {
                 });
                 
                 if (response.ok) {
-                    const data = await response.json();
-                    this.availableLayanan = Array.isArray(data) ? data : [];
+                    const res = await response.json();
+                    this.availableLayanan = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
                     console.log('✅ Layanan loaded:', this.availableLayanan);
                 } else {
                     console.error('❌ HTTP Error:', response.status);
@@ -640,10 +640,19 @@ function hppCalculator() {
                 console.log('📤 Submitting HPP data...');
                 
                 const submitData = {
-                    ...this.form,
-                    calculated: this.calculated,
-                    selectedLayanan: this.selectedLayanan,
-                    selectedVehicle: this.selectedVehicle
+                    sumber_pendapatan: this.form.sumber_pendapatan,
+                    jenis_kendaraan: this.form.jenis_kendaraan,
+                    kategori_pendapatan: this.form.kategori_pendapatan,
+                    layanan_hpp: this.form.layanan_hpp,
+                    proporsi_ml: this.form.proporsi_ml,
+                    proporsi_decimal: this.calculated.proporsi_decimal,
+                    pemakaian: this.calculated.pemakaian,
+                    harga_per_ml: this.calculated.harga_per_ml,
+                    hpp: this.calculated.hpp,
+                    margin_member: this.calculated.margin_member,
+                    margin_non_member: this.calculated.margin_non_member,
+                    persen_hpp_member: this.calculated.persen_hpp_member,
+                    persen_hpp_non_member: this.calculated.persen_hpp_non_member
                 };
                 
                 console.log('📋 Submit data:', submitData);
@@ -863,4 +872,4 @@ function hppCalculator() {
     }
 }
 </script>
-@endsection
+@endpush

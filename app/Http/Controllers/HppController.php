@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use App\Models\Vehicle;
 use App\Models\Component;
 use App\Models\ServiceCategory;
@@ -124,23 +125,21 @@ class HppController extends Controller
                         ->where('kategori_pendapatan', $kategori)
                         ->whereNotNull('layanan_hpp')
                         ->where('layanan_hpp', '!=', '')
-                        ->with(['component' => function($query) {
-                            $query->select('id', 'name', 'harga_per_ml', 'satuan', 'qty');
-                        }])
-                        ->get(['id', 'layanan_hpp', 'proporsi_ml', 'component_id'])
+                        ->get(['id', 'layanan_hpp', 'proporsi_ml'])
                         ->map(function($service) {
+                            $component = Component::where('name', $service->layanan_hpp)->first();
                             return [
                                 'id' => $service->id,
                                 'layanan_hpp' => $service->layanan_hpp,
                                 'proporsi_ml' => (float) $service->proporsi_ml,
-                                'component_id' => $service->component_id,
-                                'component' => $service->component ? [
-                                    'id' => $service->component->id,
-                                    'name' => $service->component->name,
-                                    'harga_per_ml' => (float) $service->component->harga_per_ml,
-                                    'satuan' => $service->component->satuan,
-                                    'qty' => (float) $service->component->qty,
-                                    'has_stock' => method_exists($service->component, 'hasStock') ? $service->component->hasStock() : true
+                                'component_id' => $component ? $component->id : null,
+                                'component' => $component ? [
+                                    'id' => $component->id,
+                                    'name' => $component->name,
+                                    'harga_per_ml' => (float) $component->harga_per_ml,
+                                    'satuan' => $component->satuan,
+                                    'qty' => (float) $component->qty,
+                                    'has_stock' => method_exists($component, 'hasStock') ? $component->hasStock() : true
                                 ] : null
                             ];
                         });
@@ -202,13 +201,10 @@ class HppController extends Controller
             $jenis_kendaraan = $request->jenis_kendaraan;
             
             // Query berdasarkan kolom yang tepat di tabel service_categories
-            $service = ServiceCategory::with(['component' => function($query) {
-                            $query->select('id', 'name', 'harga_per_ml', 'satuan', 'qty');
-                        }])
-                        ->where('sumber_pendapatan', $sumber)
+            $service = ServiceCategory::where('sumber_pendapatan', $sumber)
                         ->where('kategori_pendapatan', $kategori)
                         ->where('layanan_hpp', $layanan)
-                        ->first(['id', 'layanan_hpp', 'proporsi_ml', 'component_id']);
+                        ->first(['id', 'layanan_hpp', 'proporsi_ml']);
             
             // Query vehicles berdasarkan kolom jenis_kendaraan
             $vehicle = Vehicle::where('jenis_kendaraan', $jenis_kendaraan)
@@ -231,8 +227,8 @@ class HppController extends Controller
                 ], 404);
             }
             
-            // Ambil data komponen dari relasi
-            $component = $service->component;
+            // Ambil data komponen berdasarkan nama layanan_hpp
+            $component = Component::where('name', $service->layanan_hpp)->first();
             
             if (!$component) {
                 return response()->json([
@@ -319,7 +315,26 @@ class HppController extends Controller
     public function store(Request $request)
     {
         try {
-            $request->validate([
+            // Extract from nested calculated object if present
+            $calculated = $request->input('calculated', []);
+            
+            $dataToValidate = [
+                'sumber_pendapatan' => $request->sumber_pendapatan,
+                'jenis_kendaraan' => $request->jenis_kendaraan,
+                'kategori_pendapatan' => $request->kategori_pendapatan,
+                'layanan_hpp' => $request->layanan_hpp,
+                'proporsi_ml' => $request->proporsi_ml,
+                'proporsi_decimal' => $request->proporsi_decimal ?? ($calculated['proporsi_decimal'] ?? null),
+                'pemakaian' => $request->pemakaian ?? ($calculated['pemakaian'] ?? null),
+                'harga_per_ml' => $request->harga_per_ml ?? ($calculated['harga_per_ml'] ?? null),
+                'hpp' => $request->hpp ?? ($calculated['hpp'] ?? null),
+                'margin_member' => $request->margin_member ?? ($calculated['margin_member'] ?? null),
+                'margin_non_member' => $request->margin_non_member ?? ($calculated['margin_non_member'] ?? null),
+                'persen_hpp_member' => $request->persen_hpp_member ?? ($calculated['persen_hpp_member'] ?? null),
+                'persen_hpp_non_member' => $request->persen_hpp_non_member ?? ($calculated['persen_hpp_non_member'] ?? null),
+            ];
+
+            $validator = Validator::make($dataToValidate, [
                 'sumber_pendapatan' => 'required|string|max:255',
                 'jenis_kendaraan' => 'required|string|max:255',
                 'kategori_pendapatan' => 'required|string|max:255',
@@ -335,19 +350,26 @@ class HppController extends Controller
                 'persen_hpp_non_member' => 'required|numeric|min:0|max:100'
             ]);
 
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal: ' . implode(', ', $validator->errors()->all())
+                ], 422);
+            }
+
             // Validasi vehicle exists
-            $vehicle = Vehicle::where('jenis_kendaraan', $request->jenis_kendaraan)->first();
+            $vehicle = Vehicle::where('jenis_kendaraan', $dataToValidate['jenis_kendaraan'])->first();
             
             // Validasi service category exists
-            $serviceCategory = ServiceCategory::where('sumber_pendapatan', $request->sumber_pendapatan)
-                                ->where('kategori_pendapatan', $request->kategori_pendapatan)
-                                ->where('layanan_hpp', $request->layanan_hpp)
+            $serviceCategory = ServiceCategory::where('sumber_pendapatan', $dataToValidate['sumber_pendapatan'])
+                                ->where('kategori_pendapatan', $dataToValidate['kategori_pendapatan'])
+                                ->where('layanan_hpp', $dataToValidate['layanan_hpp'])
                                 ->first();
 
             if (!$vehicle) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Vehicle dengan jenis kendaraan "' . $request->jenis_kendaraan . '" tidak ditemukan!'
+                    'message' => 'Vehicle dengan jenis kendaraan "' . $dataToValidate['jenis_kendaraan'] . '" tidak ditemukan!'
                 ], 404);
             }
             
@@ -360,20 +382,20 @@ class HppController extends Controller
 
             // Simpan ke tabel hpp_results
             $hppResult = HppResult::create([
-                'title' => $request->sumber_pendapatan . ' - ' . $request->jenis_kendaraan . ' - ' . $request->layanan_hpp,
-                'jenis_kendaraan' => $request->jenis_kendaraan,
-                'sumber_pendapatan' => $request->sumber_pendapatan,
-                'kategori_pendapatan' => $request->kategori_pendapatan,
-                'layanan_hpp' => $request->layanan_hpp,
-                'proporsi_ml' => (float) $request->proporsi_ml,
-                'proporsi_decimal' => (float) $request->proporsi_decimal,
-                'pemakaian' => (float) $request->pemakaian,
-                'harga_per_ml' => (float) $request->harga_per_ml,
-                'hpp' => (float) $request->hpp,
-                'margin_member' => (float) $request->margin_member,
-                'margin_non_member' => (float) $request->margin_non_member,
-                'persen_hpp_member' => (float) $request->persen_hpp_member,
-                'persen_hpp_non_member' => (float) $request->persen_hpp_non_member
+                'title' => $dataToValidate['sumber_pendapatan'] . ' - ' . $dataToValidate['jenis_kendaraan'] . ' - ' . $dataToValidate['layanan_hpp'],
+                'jenis_kendaraan' => $dataToValidate['jenis_kendaraan'],
+                'sumber_pendapatan' => $dataToValidate['sumber_pendapatan'],
+                'kategori_pendapatan' => $dataToValidate['kategori_pendapatan'],
+                'layanan_hpp' => $dataToValidate['layanan_hpp'],
+                'proporsi_ml' => (float) $dataToValidate['proporsi_ml'],
+                'proporsi_decimal' => (float) $dataToValidate['proporsi_decimal'],
+                'pemakaian' => (float) $dataToValidate['pemakaian'],
+                'harga_per_ml' => (float) $dataToValidate['harga_per_ml'],
+                'hpp' => (float) $dataToValidate['hpp'],
+                'margin_member' => (float) $dataToValidate['margin_member'],
+                'margin_non_member' => (float) $dataToValidate['margin_non_member'],
+                'persen_hpp_member' => (float) $dataToValidate['persen_hpp_member'],
+                'persen_hpp_non_member' => (float) $dataToValidate['persen_hpp_non_member']
             ]);
 
             return response()->json([
@@ -448,19 +470,38 @@ class HppController extends Controller
     }
 
     // Method untuk debugging - cek data di database
-    public function debugData()
+    /**
+     * Fetch Komponen berdasarkan Kategori (bahan_baku / tenaga_kerja / overhead)
+     */
+    public function getKomponenByKategori(Request $request)
     {
+        $kategori = $request->query('kategori');
+        $komponens = Component::when($kategori, function ($q) use ($kategori) {
+            return $q->where('kategori', $kategori);
+        })->get();
+
         return response()->json([
-            'sumber_pendapatan_count' => ServiceCategory::distinct('sumber_pendapatan')->count('sumber_pendapatan'),
-            'service_categories_count' => ServiceCategory::count(),
-            'vehicles_count' => Vehicle::count(),
-            'components_count' => Component::count(),
-            'sample_data' => [
-                'sumber_pendapatan' => ServiceCategory::distinct()->pluck('sumber_pendapatan')->take(5),
-                'service_categories' => ServiceCategory::take(3)->get(),
-                'vehicles' => Vehicle::take(3)->get(),
-                'components' => Component::take(3)->get()
-            ]
+            'status' => 'success',
+            'data' => $komponens
+        ]);
+    }
+
+    /**
+     * Fetch Detail Layanan beserta Komponen HPP-nya (Auto-fill Transaksi/HPP)
+     */
+    public function getLayananDetail($id)
+    {
+        $layanan = ServiceCategory::with('komponens')->findOrFail($id);
+        
+        $totalHpp = $layanan->komponens->sum(function($item) {
+            return $item->pivot->subtotal_biaya ?? ($item->harga_per_ml * $item->pivot->jumlah_pemakaian);
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'layanan' => $layanan,
+            'total_hpp' => $totalHpp,
+            'komponens' => $layanan->komponens
         ]);
     }
 }

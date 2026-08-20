@@ -19,20 +19,28 @@ class Component extends Model
         'satuan',
         'harga_per_ml',
         'harga_per_satuan',
-        'kategori'
+        'kategori',
+        'biaya_satuan'
     ];
 
     protected $casts = [
         'harga' => 'float',
         'harga_per_ml' => 'float',
         'harga_per_satuan' => 'float',
+        'biaya_satuan' => 'float',
         'qty' => 'float'
     ];
 
-    // CORRECTED: Relationship ke ServiceCategory
+    // Relationship ke ServiceCategory via pivot layanan_komponen
     public function serviceCategories()
     {
         return $this->hasMany(ServiceCategory::class, 'component_id', 'id');
+    }
+
+    public function layanans()
+    {
+        return $this->belongsToMany(ServiceCategory::class, 'layanan_komponen', 'component_id', 'service_category_id')
+                    ->withPivot('jumlah_pemakaian', 'subtotal_biaya');
     }
     
     // Method untuk cek stock (jika ada kolom stock)

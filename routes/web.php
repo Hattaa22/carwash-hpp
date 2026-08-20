@@ -25,6 +25,8 @@ Route::prefix('hpp')->name('hpp.')->middleware('hpp.middleware')->group(function
 
 // API Routes for dynamic loading
 Route::get('/api/layanan', [HppController::class, 'getLayanan'])->name('api.layanan');
+Route::get('/api/layanan/{id}', [HppController::class, 'getLayananDetail'])->name('api.layanan.detail');
+Route::get('/api/komponen-by-kategori', [HppController::class, 'getKomponenByKategori'])->name('api.komponen.kategori');
 Route::get('/api/component-price', [HppController::class, 'getComponentPrice'])->name('api.component.price');
 Route::post('/api/calculate', [HppController::class, 'calculate'])->name('api.calculate');
 
