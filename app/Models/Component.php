@@ -14,13 +14,18 @@ class Component extends Model
 
     protected $fillable = [
         'name',
-        'harga_per_ml',
+        'harga',
+        'qty',
         'satuan',
-        'qty'
+        'harga_per_ml',
+        'harga_per_satuan',
+        'kategori'
     ];
 
     protected $casts = [
+        'harga' => 'float',
         'harga_per_ml' => 'float',
+        'harga_per_satuan' => 'float',
         'qty' => 'float'
     ];
 

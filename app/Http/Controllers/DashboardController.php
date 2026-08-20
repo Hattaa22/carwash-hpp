@@ -88,7 +88,7 @@ class DashboardController extends Controller
             });
         } catch (\Exception $e) {
             // Log error dan return empty collection
-            ('Error getting chart data: ' . $e->getMessage());
+            \Log::error('Error getting chart data: ' . $e->getMessage());
             return collect([]);
         }
     }
@@ -114,7 +114,7 @@ class DashboardController extends Controller
                 'max_hpp' => round($stats->max_hpp ?? 0, 2)
             ];
         } catch (\Exception $e) {
-            ('Error getting statistics: ' . $e->getMessage());
+            \Log::error('Error getting statistics: ' . $e->getMessage());
             return [
                 'total_results' => 0,
                 'avg_hpp' => 0,

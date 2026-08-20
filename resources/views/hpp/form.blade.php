@@ -484,36 +484,19 @@ function hppCalculator() {
                     layanan.layanan_hpp === this.form.layanan_hpp
                 );
                 
-                if (this.selectedLayanan) {
-                    console.log('✅ Selected layanan:', this.selectedLayanan);
-                    
-                    // Auto-fill proporsi if available
-                    if (this.selectedLayanan.proporsi_ml) {
-                        this.form.proporsi_ml = parseFloat(this.selectedLayanan.proporsi_ml);
-                        console.log('🔄 Auto-filled proporsi:', this.form.proporsi_ml);
-                    }
-                    
-                    // Auto-fill pricing if available
-                    if (this.selectedLayanan.harga_beli_per_liter) {
-                        this.form.harga_beli_per_liter = parseFloat(this.selectedLayanan.harga_beli_per_liter);
-                    }
-                    if (this.selectedLayanan.harga_jual_member) {
-                        this.form.harga_jual_member = parseFloat(this.selectedLayanan.harga_jual_member);
-                    }
-                    if (this.selectedLayanan.harga_jual_non_member) {
-                        this.form.harga_jual_non_member = parseFloat(this.selectedLayanan.harga_jual_non_member);
-                    }
-                    
-                    // Trigger calculation
-                    await this.calculateIfReady();
+                if (this.selectedLayanan && this.selectedLayanan.proporsi_ml) {
+                    this.form.proporsi_ml = parseFloat(this.selectedLayanan.proporsi_ml);
+                    console.log('🔄 Auto-filled proporsi_ml:', this.form.proporsi_ml);
                 }
+                
+                await this.fetchServiceDataAndCalculate();
             } else {
                 this.selectedLayanan = null;
             }
         },
         
         // Jenis kendaraan change handler
-        onJenisKendaraanChange() {
+        async onJenisKendaraanChange() {
             console.log('🔄 Jenis kendaraan changed to:', this.form.jenis_kendaraan);
             
             if (this.form.jenis_kendaraan) {
@@ -521,14 +504,61 @@ function hppCalculator() {
                     vehicle.jenis_kendaraan === this.form.jenis_kendaraan
                 );
                 
-                if (this.selectedVehicle) {
-                    console.log('✅ Selected vehicle:', this.selectedVehicle);
-                }
+                await this.fetchServiceDataAndCalculate();
             } else {
                 this.selectedVehicle = null;
             }
-            
-            this.calculateIfReady();
+        },
+
+        // Fetch backend calculation & details via API
+        async fetchServiceDataAndCalculate() {
+            if (!this.form.sumber_pendapatan || !this.form.kategori_pendapatan || !this.form.layanan_hpp || !this.form.jenis_kendaraan) {
+                return;
+            }
+
+            this.loading.calculation = true;
+            try {
+                const response = await fetch('{{ route("hpp.service-data") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': window.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        sumber_pendapatan: this.form.sumber_pendapatan,
+                        kategori_pendapatan: this.form.kategori_pendapatan,
+                        layanan_hpp: this.form.layanan_hpp,
+                        jenis_kendaraan: this.form.jenis_kendaraan
+                    })
+                });
+
+                const res = await response.json();
+                if (res.success && res.data) {
+                    const data = res.data;
+                    this.form.proporsi_ml = data.proporsi_ml;
+                    this.form.harga_beli_per_liter = data.harga_per_ml * 1000;
+                    this.form.harga_jual_member = data.harga_member;
+                    this.form.harga_jual_non_member = data.harga_non_member;
+
+                    this.calculated = {
+                        proporsi_decimal: data.proporsi_decimal,
+                        pemakaian: data.pemakaian,
+                        harga_per_ml: data.harga_per_ml,
+                        hpp: data.hpp,
+                        margin_member: data.margin_member,
+                        margin_non_member: data.margin_non_member,
+                        persen_hpp_member: data.persen_hpp_member,
+                        persen_hpp_non_member: data.persen_hpp_non_member
+                    };
+                    console.log('✅ Auto-filled & calculated from backend API:', data);
+                } else {
+                    console.warn('⚠️ Service data not found:', res.message || res.error);
+                }
+            } catch (err) {
+                console.error('❌ Error fetching service data:', err);
+            } finally {
+                this.loading.calculation = false;
+            }
         },
         
         // Main calculation method

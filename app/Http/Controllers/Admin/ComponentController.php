@@ -45,15 +45,19 @@ class ComponentController extends Controller
                 ->withInput();
         }
 
-        $pricePerUnit = $request->quantity > 0 ? $request->purchase_price / $request->quantity : 0;
+        $harga = $request->harga ?? $request->purchase_price ?? 0;
+        $qty = $request->qty ?? $request->quantity ?? 0;
+        $satuan = $request->satuan ?? $request->unit ?? 'ml';
+        $hargaPerMl = $qty > 0 ? $harga / $qty : 0;
 
         Component::create([
             'name' => $request->name,
-            'purchase_price' => $request->purchase_price,
-            'quantity' => $request->quantity,
-            'unit' => $request->unit,
-            'price_per_unit' => $pricePerUnit,
-            'category' => $request->category
+            'harga' => $harga,
+            'qty' => $qty,
+            'satuan' => $satuan,
+            'harga_per_ml' => $hargaPerMl,
+            'harga_per_satuan' => $hargaPerMl,
+            'kategori' => $request->kategori ?? $request->category
         ]);
 
         return redirect()->route('admin.components')
@@ -65,7 +69,7 @@ class ComponentController extends Controller
      */
     public function show(Component $component)
     {
-        return view('admin.components.show', compact('component'));
+        return response()->json($component);
     }
 
     /**
@@ -83,9 +87,13 @@ class ComponentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:components,name,' . $component->id,
-            'purchase_price' => 'required|numeric|min:0',
-            'quantity' => 'required|numeric|min:0',
-            'unit' => 'required|string|max:50',
+            'harga' => 'nullable|numeric|min:0',
+            'purchase_price' => 'nullable|numeric|min:0',
+            'qty' => 'nullable|numeric|min:0',
+            'quantity' => 'nullable|numeric|min:0',
+            'satuan' => 'nullable|string|max:50',
+            'unit' => 'nullable|string|max:50',
+            'kategori' => 'nullable|string|max:100',
             'category' => 'nullable|string|max:100'
         ]);
 
@@ -95,15 +103,19 @@ class ComponentController extends Controller
                 ->withInput();
         }
 
-        $pricePerUnit = $request->quantity > 0 ? $request->purchase_price / $request->quantity : 0;
+        $harga = $request->harga ?? $request->purchase_price ?? $component->harga;
+        $qty = $request->qty ?? $request->quantity ?? $component->qty;
+        $satuan = $request->satuan ?? $request->unit ?? $component->satuan;
+        $hargaPerMl = $qty > 0 ? $harga / $qty : 0;
 
         $component->update([
             'name' => $request->name,
-            'purchase_price' => $request->purchase_price,
-            'quantity' => $request->quantity,
-            'unit' => $request->unit,
-            'price_per_unit' => $pricePerUnit,
-            'category' => $request->category
+            'harga' => $harga,
+            'qty' => $qty,
+            'satuan' => $satuan,
+            'harga_per_ml' => $hargaPerMl,
+            'harga_per_satuan' => $hargaPerMl,
+            'kategori' => $request->kategori ?? $request->category
         ]);
 
         return redirect()->route('admin.components')
